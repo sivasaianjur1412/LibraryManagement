@@ -1,55 +1,176 @@
 package com.cis.librarymanagement.service;
 
+import com.cis.librarymanagement.entity.Address;
+import com.cis.librarymanagement.entity.Checkout;
+import com.cis.librarymanagement.entity.LibraryMember;
 import com.cis.librarymanagement.model.Member;
+import com.cis.librarymanagement.repository.AddressRepository;
+import com.cis.librarymanagement.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import javax.swing.text.html.Option;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class MemberService {
+
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private AddressRepository addressRepository;
+
     private final Map<Integer, Member> integerMemberMap = new HashMap<>();
-    public Member createMember(Member member) {
-        member.setMemberId(Math.abs(new Random().nextInt()));
-        integerMemberMap.put(member.getMemberId(), member);
+    public LibraryMember createMember(Member member) {
+        int memberId = Math.abs(new Random().nextInt());
+        LibraryMember libraryMember = new LibraryMember();
+        libraryMember.setMemberId(memberId);
+        libraryMember.setFirstName(member.getFirstName());
+        libraryMember.setLastName(member.getLastName());
+        libraryMember.setEmailId(member.getEmailId());
+        libraryMember.setPhoneNumber(member.getPhoneNumber());
+        libraryMember.setMembershipLevel(member.getMembershipLevel());
+
+        Address address = member.getAddress();
+        if(address != null) {
+            Optional<Address> addressOptional = addressRepository.findById(address
+                    .getAddressId());
+            if(addressOptional.isPresent()) {
+                libraryMember.setAddress(addressOptional.get());
+            }
+            else {
+                Address savedAddress = addressRepository.save(address);
+                libraryMember.setAddress(savedAddress);
+            }
+        }
+        libraryMember.setCheckoutList(member.getCheckoutList());
+        return memberRepository.save(libraryMember);
+    }
+
+    public Member readMember(Integer memberId) {
+
+        Optional<LibraryMember> memberOptional =
+                memberRepository.findById(memberId);
+        LibraryMember libraryMember =
+                memberOptional.orElse(new LibraryMember());
+
+        Member member = new Member();
+        member.setMemberId(libraryMember.getMemberId());
+        member.setMembershipLevel(libraryMember.getMembershipLevel());
+        member.setEmailId(libraryMember.getEmailId());
+        member.setFirstName(libraryMember.getFirstName());
+        member.setLastName(libraryMember.getLastName());
+        member.setPhoneNumber(libraryMember.getPhoneNumber());
+
+        Address address = new Address();
+        address.setAddressId(libraryMember.getAddress().getAddressId());
+        address.setLine1(libraryMember.getAddress().getLine1());
+        address.setLine2(libraryMember.getAddress().getLine2());
+        address.setCity(libraryMember.getAddress().getCity());
+        address.setState(libraryMember.getAddress().getState());
+        address.setZip(libraryMember.getAddress().getZip());
+
+        List<Checkout> checkoutList =
+                libraryMember.getCheckoutList().stream().map(c -> {
+                    Checkout cdo = new Checkout();
+                    cdo.setId(c.getId());
+                    cdo.setIsbn(c.getIsbn());
+                    cdo.setCheckoutDate(c.getCheckoutDate());
+                    cdo.setDueDate(c.getDueDate());
+                    cdo.setReturned(c.isReturned());
+                    return  cdo;
+                }).collect(Collectors.toList());
+
+        member.setAddress(address);
+        member.setCheckoutList(checkoutList);
+
         return member;
     }
 
-    public Member readMember(int memberId) {
+
+
+    /**public Member readMember(int memberId) {
         return integerMemberMap.get(memberId);
+    }**/
+
+    public List<Member> readAllMembers() {
+        List<LibraryMember> libraryMemberList =
+                memberRepository.findAll();
+
+        return libraryMemberList.stream()
+                .map(this::convertModel)
+                .toList();
     }
 
-    public Collection<Member> readAllMembers() {
-        return integerMemberMap.values();
+    private Member convertModel(LibraryMember libraryMember) {
+        Member member = new Member();
+        member.setMemberId(libraryMember.getMemberId());
+        member.setMembershipLevel(libraryMember.getMembershipLevel());
+        member.setEmailId(libraryMember.getEmailId());
+        member.setFirstName(libraryMember.getFirstName());
+        member.setLastName(libraryMember.getLastName());
+        member.setPhoneNumber(libraryMember.getPhoneNumber());
+
+        Address address = new Address();
+        address.setAddressId(libraryMember.getAddress().getAddressId());
+        address.setLine1(libraryMember.getAddress().getLine1());
+        address.setLine2(libraryMember.getAddress().getLine2());
+        address.setCity(libraryMember.getAddress().getCity());
+        address.setState(libraryMember.getAddress().getState());
+        address.setZip(libraryMember.getAddress().getZip());
+
+        List<Checkout> checkoutList =
+                libraryMember.getCheckoutList().stream().map(c -> {
+                    Checkout cdo = new Checkout();
+                    cdo.setId(c.getId());
+                    cdo.setIsbn(c.getIsbn());
+                    cdo.setCheckoutDate(c.getCheckoutDate());
+                    cdo.setDueDate(c.getDueDate());
+                    cdo.setReturned(c.isReturned());
+                    return  cdo;
+                }).collect(Collectors.toList());
+
+        member.setAddress(address);
+        member.setCheckoutList(checkoutList);
+
+        return member;
     }
 
     public Member updateMemberData(int memberId, Member updatedMember) {
-        System.out.println(integerMemberMap);
-        if(integerMemberMap.containsKey(memberId)) {
-            Member member = integerMemberMap.get(memberId);
-            if(!member.getFirstName().isEmpty()) {
-                member.setFirstName(updatedMember.getFirstName());
+        Optional<LibraryMember> existingMemberOptional = memberRepository.findById(memberId);
+        if(existingMemberOptional.isPresent()) {
+            LibraryMember existingMember = existingMemberOptional.get();
+            if(!updatedMember.getFirstName().isEmpty()) {
+                existingMember.setFirstName(updatedMember.getFirstName());
             }
-            if(!member.getLastName().isEmpty()) {
-                member.setLastName(updatedMember.getLastName());
+            else if(!updatedMember.getLastName().isEmpty()) {
+                existingMember.setLastName(updatedMember.getLastName());
             }
-            if(!member.getEmailId().isEmpty()) {
-                member.setEmailId(updatedMember.getEmailId());
+            else if(!updatedMember.getEmailId().isEmpty()) {
+                existingMember.setEmailId(updatedMember.getEmailId());
             }
-            if(!member.getPhoneNumber().isEmpty()) {
-                member.setPhoneNumber(updatedMember.getPhoneNumber());
+            else if(!updatedMember.getPhoneNumber().isEmpty()) {
+                existingMember.setPhoneNumber(updatedMember.getPhoneNumber());
             }
-            integerMemberMap.put(memberId, member);
+            else if(!updatedMember.getMembershipLevel().isEmpty()) {
+                existingMember.setMembershipLevel(updatedMember.getMembershipLevel());
+            }
+            LibraryMember savedLibraryMember = memberRepository.save(existingMember);
             System.out.println("updated successfully");
-            return member;
+            return convertToMember(savedLibraryMember);
         }
         return null;
     }
 
+    private Member convertToMember(LibraryMember libraryMember) {
+        return new Member();
+    }
+
     public Member deleteMember(int memberId) {
-        return integerMemberMap.remove(memberId);
+        if(memberRepository.existsById(memberId)) {
+            memberRepository.deleteById(memberId);
+        }
+        return null;
     }
 }

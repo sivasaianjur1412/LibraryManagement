@@ -1,52 +1,24 @@
 package com.cis.librarymanagement.model;
 
+import com.cis.librarymanagement.entity.Address;
+import com.cis.librarymanagement.entity.Checkout;
+import lombok.Data;
 import lombok.Getter;
+import lombok.Setter;
+
+import java.util.List;
 
 
+@Data
+@Getter
+@Setter
 public class Member {
     private int memberId;
     private String firstName;
     private String lastName;
     private String emailId;
     private String phoneNumber;
-
-    public int getMemberId() {
-        return memberId;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getEmailId() {
-        return emailId;
-    }
-
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-
-    public void setMemberId(int memberId) {
-        this.memberId = memberId;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public void setEmailId(String emailId) {
-        this.emailId = emailId;
-    }
-
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
+    private String membershipLevel;
+    private Address address;
+    private List<Checkout> checkoutList;
 }
