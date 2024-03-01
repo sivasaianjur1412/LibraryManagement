@@ -12,7 +12,9 @@ public class Checkout {
     @Id
     @Column(name = "id")
     private Integer id;
-    private Long isbn;
+    @ManyToOne
+    @JoinColumn(name = "isbn")
+    private BookIsbn bookIsbn;
     @ManyToOne
     @JoinColumn(name = "member_id")
     private LibraryMember libraryMember;

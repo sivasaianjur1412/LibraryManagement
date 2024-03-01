@@ -1,5 +1,6 @@
 package com.cis.librarymanagement.controller;
 
+import com.cis.librarymanagement.entity.LibraryBook;
 import com.cis.librarymanagement.model.Book;
 import com.cis.librarymanagement.service.BookService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,13 +14,13 @@ public class BookController {
     private BookService bookService;
 
     @RequestMapping(value = "/book", method = RequestMethod.POST)
-    public Book createdBook(@RequestBody Book book) {
+    public LibraryBook createdBook(@RequestBody Book book) {
         return bookService.createBook(book);
     }
 
     @RequestMapping(value = "/book/read", method = RequestMethod.GET)
     public String getBookById(@RequestParam int bookId) {
-        return bookService.readBook(bookId).getBookName();
+        return bookService.readBook(bookId).getTitle();
     }
 
     @RequestMapping(value = "/book/all", method = RequestMethod.GET)

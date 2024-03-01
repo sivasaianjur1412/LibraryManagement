@@ -5,6 +5,7 @@ import com.cis.librarymanagement.entity.Checkout;
 import com.cis.librarymanagement.entity.LibraryMember;
 import com.cis.librarymanagement.model.Member;
 import com.cis.librarymanagement.repository.AddressRepository;
+import com.cis.librarymanagement.repository.CheckoutRepository;
 import com.cis.librarymanagement.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,8 @@ public class MemberService {
     private MemberRepository memberRepository;
     @Autowired
     private AddressRepository addressRepository;
+    @Autowired
+    private CheckoutRepository checkoutRepository;
 
     private final Map<Integer, Member> integerMemberMap = new HashMap<>();
     public LibraryMember createMember(Member member) {
@@ -44,7 +47,24 @@ public class MemberService {
                 libraryMember.setAddress(savedAddress);
             }
         }
-        libraryMember.setCheckoutList(member.getCheckoutList());
+        System.out.println(member.getCheckoutList());
+        if(member.getCheckoutList() != null) {
+            List<Checkout> checkoutList = member.getCheckoutList()
+                    .stream().map(cd -> {
+                        Checkout checkout = new Checkout();
+                        checkout.setId(cd.getId());
+                        checkout.setLibraryMember(cd.getLibraryMember());
+                        checkout.setBookIsbn(cd.getBookIsbn());
+                        checkout.setCheckoutDate(new Date());
+                        checkout.setDueDate(cd.getDueDate());
+                        checkout.setReturned(false);
+                        return checkout;
+                    }).toList();
+            checkoutRepository.saveAll(checkoutList);
+            libraryMember.setCheckoutList(checkoutList);
+        }
+
+        //libraryMember.setCheckoutList(member.getCheckoutList());
         return memberRepository.save(libraryMember);
     }
 
@@ -75,7 +95,7 @@ public class MemberService {
                 libraryMember.getCheckoutList().stream().map(c -> {
                     Checkout cdo = new Checkout();
                     cdo.setId(c.getId());
-                    cdo.setIsbn(c.getIsbn());
+                    cdo.setBookIsbn(c.getBookIsbn());
                     cdo.setCheckoutDate(c.getCheckoutDate());
                     cdo.setDueDate(c.getDueDate());
                     cdo.setReturned(c.isReturned());
@@ -124,7 +144,7 @@ public class MemberService {
                 libraryMember.getCheckoutList().stream().map(c -> {
                     Checkout cdo = new Checkout();
                     cdo.setId(c.getId());
-                    cdo.setIsbn(c.getIsbn());
+                    cdo.setBookIsbn(c.getBookIsbn());
                     cdo.setCheckoutDate(c.getCheckoutDate());
                     cdo.setDueDate(c.getDueDate());
                     cdo.setReturned(c.isReturned());
